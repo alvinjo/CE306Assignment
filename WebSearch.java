@@ -7,7 +7,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -30,9 +29,9 @@ public class WebSearch {
     }
 
 
-    //TODO comment
     /**
      * Constructor for the class. Allows the user to input a site to be indexed.
+     * Runs the processing pipeline in a loop to allow multiple sites to be indexed.
      */
     public WebSearch(){
         Scanner input = new Scanner(System.in);
@@ -61,29 +60,29 @@ public class WebSearch {
 
         //Tokenize
         String tokenizedText = tokenize(docText);
-//        writeToLog(tokenizedText, "tokenized");
+        writeToLog(tokenizedText, "tokenized");
         System.out.println(tokenizedText);
 
         //POS and selecting keywords
         String posTagged = posTagging(tokenizedText);
-//        writeToLog(posTagged, "tagged");
+        writeToLog(posTagged, "tagged");
         System.out.println(posTagged);
 
         String niceTags = grabTagged(posTagged);
         System.out.println(niceTags);
 
         niceTags = removeTags(niceTags);
-//        writeToLog(niceTags, "selected");
+        writeToLog(niceTags, "selected");
         System.out.println(niceTags);
 
         //Remove stopwords
         String cleanText = removeStopWords(niceTags);
-//        writeToLog(cleanText, "stopwordremoval");
+        writeToLog(cleanText, "stopwordremoval");
         System.out.println(cleanText);
 
         //Stemming
         String stemmedText = stemming(cleanText);
-//        writeToLog(stemmedText, "stemmed");
+        writeToLog(stemmedText, "stemmed");
         System.out.println(stemmedText);
 
         //Create TF index
@@ -92,7 +91,7 @@ public class WebSearch {
 
         //HTML output
         writeTF();
-        writeToIndex1();
+        writeInvertedIndex();
     }
 
 
@@ -257,19 +256,6 @@ public class WebSearch {
         return sb.toString();
     }
 
-    private String stemming1(String text){
-        String[] textArray = text.split(" ");
-        Morphology morph = new Morphology();
-        StringBuilder sb = new StringBuilder();
-        String tag;
-        for(String word : textArray){
-            System.out.println(word);
-            tag = word.substring(word.lastIndexOf("_")+1, word.length());
-            sb.append(morph.lemma(word.substring(0, word.lastIndexOf("_")), tag)).append(" ");
-        }
-        return sb.toString();
-    }
-
 
     /**
      * Creates a term frequency list using a hash map. If a term does not exist in the map, it is added and if a term
@@ -291,6 +277,7 @@ public class WebSearch {
 
     /**
      * Outputs the TF list in the terminal in a readable format.
+     * Also makes a call to the writeToLog method to write the TF list to a text file.
      */
     private void writeTF(){
         StringBuilder sb = new StringBuilder();
@@ -302,27 +289,14 @@ public class WebSearch {
     }
 
 
-    //TODO check comment
     /**
-     * Writes the inputted text into a text file in the src directory.
-     * The name of the file is the combined ascii values of each ascii character in the url.
+     * This method creates an index file using the first TF created.
+     * It then loops through the index checking its terms with the terms in the other TF file.
+     * If a match is found, the document ID is appended to the end of the line.
+     *
+     * @return true if successful.
      */
-    private void writeToIndex(){
-        StringBuilder sb = new StringBuilder();
-        for (String word:tfMap.keySet()) {
-            sb.append(String.format("%15s%5d%15s", word, tfMap.get(word), urlToName(url)));
-            sb.append("\r\n");
-        }
-
-        try {
-            PrintWriter writer = new PrintWriter("index.txt", "UTF-8");
-            writer.write(sb.toString());
-        } catch (FileNotFoundException | UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private boolean writeToIndex1(){
+    private boolean writeInvertedIndex(){
         try {
             File file = new File("index.txt");
             if (!file.exists()){
@@ -366,24 +340,23 @@ public class WebSearch {
                 }
             }
             writer.close();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-
         urlList.remove(1);
-
         return true;
     }
 
 
-
-
-    //TODO comment
+    /**
+     * Writes the inputted text to a text file with a specified identifier string appended to the name.
+     *
+     * @param text the text being written.
+     * @param log the tag for the file.
+     */
     private void writeToLog(String text, String log){
         try {
-
             PrintWriter writer = new PrintWriter( urlToName(url) + log + ".txt", "UTF-8");
             writer.write(text);
         } catch (FileNotFoundException | UnsupportedEncodingException e) {
@@ -391,7 +364,13 @@ public class WebSearch {
         }
     }
 
-    //TODO comment
+
+    /**
+     * Creates a document ID for a URL by tokenizing the URL then adding up the ascii values of each character.
+     *
+     * @param url the URL to be converted.
+     * @return the docID
+     */
     private int urlToName(String url){
         String sName = tokenize(url);
         int nName = 0;
@@ -400,6 +379,4 @@ public class WebSearch {
         }
         return nName;
     }
-
-
 }
