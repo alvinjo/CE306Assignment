@@ -123,12 +123,12 @@ public class WebSearch {
      * @return a single string containing the tokenized words of the plaintext.
      */
     private String tokenize(String docText){
-        StringTokenizer tokenizer = new StringTokenizer(docText, " \t\n\r\f\",.:;?![]'/"); //TODO include '-'
+        StringTokenizer tokenizer = new StringTokenizer(docText, " \t\n\r\f\",.:;?![]'/");
         StringBuilder sb = new StringBuilder();
 
         while(tokenizer.hasMoreTokens()){
             String currentToken = tokenizer.nextToken();
-            currentToken = currentToken.replace("(", "").replace(")", ""); //TODO include brackets in delim
+            currentToken = currentToken.replace("(", "").replace(")", "");
 
             if(currentToken.length() == 1){
                 if(checkASCII(currentToken.charAt(0))){
@@ -339,7 +339,16 @@ public class WebSearch {
                     currentLine = reader1.readLine();
                 }
             }
+
             writer.close();
+            reader1.close();
+            reader2.close();
+
+            File old = new File("index.txt");
+            old.delete();
+            File newFile = new File("index1.txt");
+            newFile.renameTo(old);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -359,6 +368,7 @@ public class WebSearch {
         try {
             PrintWriter writer = new PrintWriter( urlToName(url) + log + ".txt", "UTF-8");
             writer.write(text);
+            writer.close();
         } catch (FileNotFoundException | UnsupportedEncodingException e) {
             e.printStackTrace();
         }
